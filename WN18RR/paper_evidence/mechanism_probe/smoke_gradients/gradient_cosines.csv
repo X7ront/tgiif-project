@@ -1,0 +1,17 @@
+batch,left,right,module,cosine
+0,residual_rank,cf,shared,-0.6111908700665402
+0,residual_rank,cf,invariant,0.3539894003854494
+0,residual_rank,treatment,shared,-0.6184334903673463
+0,residual_rank,orthogonality,shared,0.26714914674822887
+0,cf,treatment,shared,0.15172851224671174
+0,cf,orthogonality,shared,0.4214893034118798
+0,treatment,orthogonality,shared,-0.32324214678029534
+0,treatment,orthogonality,bias,-0.03982327948145384
+1,residual_rank,cf,shared,-0.7417235370648416
+1,residual_rank,cf,invariant,0.23647372286007204
+1,residual_rank,treatment,shared,-0.5133613703352163
+1,residual_rank,orthogonality,shared,0.3340368663070603
+1,cf,treatment,shared,0.8802321906762995
+1,cf,orthogonality,shared,-0.8427270284678119
+1,treatment,orthogonality,shared,-0.7742212355790778
+1,treatment,orthogonality,bias,-0.03285705871802191

@@ -1,0 +1,150 @@
+{
+  "artifacts": {
+    "group_metrics": "paper_evidence/mechanism_probe/score_pathways/full_s23/group_metrics.csv",
+    "query_ranks": "paper_evidence/mechanism_probe/score_pathways/full_s23/query_ranks.csv"
+  },
+  "checkpoint": "/mnt/f/Codex/CTS-Net-TGIIF-WN18RR-clean-20260906/checkpoint/ctsnet_tgiif_local_alignment_ep1000_20260906_WN18RR_h1_0.005_Adam_ep1000.ckpt",
+  "invariant_margin_fraction": 0.0001,
+  "metrics": {
+    "baseline_m0": {
+      "count": 6068,
+      "delta_mrr_vs_baseline_m0": 0.0,
+      "hits1": 0.8828279499011207,
+      "hits10": 0.8846407382992749,
+      "hits3": 0.8843111404087014,
+      "mr": 1316.778180619644,
+      "mrr": 0.8836779982600567
+    },
+    "gate_one": {
+      "count": 6068,
+      "delta_mrr_vs_baseline_m0": 0.04020382708624748,
+      "hits1": 0.9230388925510876,
+      "hits10": 0.924851680949242,
+      "hits3": 0.9245220830586685,
+      "mr": 927.40804218853,
+      "mrr": 0.9238818253463041
+    },
+    "gate_query_mean": {
+      "count": 6068,
+      "delta_mrr_vs_baseline_m0": 0.04020382708624748,
+      "hits1": 0.9230388925510876,
+      "hits10": 0.924851680949242,
+      "hits3": 0.9245220830586685,
+      "mr": 927.40804218853,
+      "mrr": 0.9238818253463041
+    },
+    "gate_shuffled": {
+      "count": 6068,
+      "delta_mrr_vs_baseline_m0": 0.02174997921817401,
+      "hits1": 0.9045814106789717,
+      "hits10": 0.9063941990771259,
+      "hits3": 0.9060646011865524,
+      "mr": 1158.878707976269,
+      "mrr": 0.9054279774782307
+    },
+    "invariant_shuffled": {
+      "count": 6068,
+      "delta_mrr_vs_baseline_m0": 0.03937940641579729,
+      "hits1": 0.9222148978246539,
+      "hits10": 0.9240276862228082,
+      "hits3": 0.9236980883322347,
+      "mr": 1091.9955504284771,
+      "mrr": 0.923057404675854
+    },
+    "invariant_sign_flip": {
+      "count": 6068,
+      "delta_mrr_vs_baseline_m0": 0.022017855603544967,
+      "hits1": 0.9042518127883982,
+      "hits10": 0.9058998022412657,
+      "hits3": 0.9057350032959789,
+      "mr": 1085.1636453526698,
+      "mrr": 0.9056958538636016
+    },
+    "native": {
+      "count": 6068,
+      "delta_mrr_vs_baseline_m0": 0.03937943304777258,
+      "hits1": 0.9222148978246539,
+      "hits10": 0.9240276862228082,
+      "hits3": 0.9236980883322347,
+      "mr": 1075.9431443638762,
+      "mrr": 0.9230574313078292
+    },
+    "popularity_zero": {
+      "count": 6068,
+      "delta_mrr_vs_baseline_m0": 0.04020382708624748,
+      "hits1": 0.9230388925510876,
+      "hits10": 0.924851680949242,
+      "hits3": 0.9245220830586685,
+      "mr": 927.40804218853,
+      "mrr": 0.9238818253463041
+    }
+  },
+  "paired_cluster_bootstrap": {
+    "baseline_m0": {
+      "bootstrap_repetitions": 2000,
+      "cluster_bootstrap_ci95": [
+        0.0334477012262818,
+        0.044985865125799995
+      ],
+      "native_minus_variant_mrr": 0.03937943304777258
+    },
+    "gate_one": {
+      "bootstrap_repetitions": 2000,
+      "cluster_bootstrap_ci95": [
+        -0.0016482018576022383,
+        -0.000165262317187001
+      ],
+      "native_minus_variant_mrr": -0.000824394038474896
+    },
+    "gate_query_mean": {
+      "bootstrap_repetitions": 2000,
+      "cluster_bootstrap_ci95": [
+        -0.001648316446354345,
+        -0.00016523044963319687
+      ],
+      "native_minus_variant_mrr": -0.000824394038474896
+    },
+    "gate_shuffled": {
+      "bootstrap_repetitions": 2000,
+      "cluster_bootstrap_ci95": [
+        0.014169265800160766,
+        0.021089263533452047
+      ],
+      "native_minus_variant_mrr": 0.017629453829598574
+    },
+    "invariant_shuffled": {
+      "bootstrap_repetitions": 2000,
+      "cluster_bootstrap_ci95": [
+        1.728428641878388e-08,
+        3.812754730270207e-08
+      ],
+      "native_minus_variant_mrr": 2.6631975291735444e-08
+    },
+    "invariant_sign_flip": {
+      "bootstrap_repetitions": 2000,
+      "cluster_bootstrap_ci95": [
+        0.014044271206797765,
+        0.020744041754841687
+      ],
+      "native_minus_variant_mrr": 0.017361577444227616
+    },
+    "popularity_zero": {
+      "bootstrap_repetitions": 2000,
+      "cluster_bootstrap_ci95": [
+        -0.0016483284593267812,
+        -0.00016525763357397582
+      ],
+      "native_minus_variant_mrr": -0.000824394038474896
+    }
+  },
+  "popularity_quartile_edges": [
+    2.890371799468994,
+    3.7841897010803223,
+    4.653960347175598
+  ],
+  "residual_multiplier": 0.75,
+  "seed": 23,
+  "split": "valid",
+  "strict_filtered_rank": true,
+  "triple_count": 3034
+}

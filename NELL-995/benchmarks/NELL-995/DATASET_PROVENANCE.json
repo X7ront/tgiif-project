@@ -1,0 +1,71 @@
+{
+  "dataset": "NELL-995",
+  "expected_statistics": {
+    "entities": 75492,
+    "relations": 200,
+    "test2id.txt": 3992,
+    "train2id.txt": 149678,
+    "valid2id.txt": 543
+  },
+  "mirror_repository_license": "LGPL-2.1",
+  "output_files": {
+    "entity2id.txt": {
+      "bytes": 2765134,
+      "sha256": "4e814aa5c26052bba87e7e6e51657192459c56a60d2f675c8ba6fd75b610271a"
+    },
+    "relation2id.txt": {
+      "bytes": 6816,
+      "sha256": "9f1c2bdb86b830f6980032bc91ebaa5797570d98cc55418b64b041c219b29fc9"
+    },
+    "test2id.txt": {
+      "bytes": 60208,
+      "sha256": "b0fe3eb56cd379ae5e541afd4f605da5161e6bc7cdb865d1f579399a7bb694ca"
+    },
+    "train2id.txt": {
+      "bytes": 2248993,
+      "sha256": "4df6ef05a6e0f1956941061c5a836075416c8bcf7925a5188b770852721dd1f2"
+    },
+    "valid2id.txt": {
+      "bytes": 8158,
+      "sha256": "277a9d4b1a2cea6ec6b760565cba8b4510de626b50ace715c1026fd0a7948438"
+    }
+  },
+  "output_layout": "OpenKE head tail relation, first-line count",
+  "source_files": {
+    "ent2id.pkl": {
+      "bytes": 2720937,
+      "sha256": "e54e60c0335cc4e85d1899a02930f7d73ca46fba49c3e164473d12f4ea2e05bc",
+      "url": "https://raw.githubusercontent.com/Wimmics/semantically-enriched-link-prediction-datasets/2a1e389dab08f1239bf946c3d83be7600dc15937/NELL-995%2B/pickle/ent2id.pkl"
+    },
+    "rel2id.pkl": {
+      "bytes": 6938,
+      "sha256": "8e8d8cfb2512499966eb99277826e5bfd4422208e437aca53cd8ae91c1fd9d77",
+      "url": "https://raw.githubusercontent.com/Wimmics/semantically-enriched-link-prediction-datasets/2a1e389dab08f1239bf946c3d83be7600dc15937/NELL-995%2B/pickle/rel2id.pkl"
+    },
+    "test2id.txt": {
+      "bytes": 60203,
+      "sha256": "f45b190cc06ae16e7cf65b7f26397832a77954037dff61454e968fb9dc73b778",
+      "url": "https://raw.githubusercontent.com/Wimmics/semantically-enriched-link-prediction-datasets/2a1e389dab08f1239bf946c3d83be7600dc15937/NELL-995%2B/test2id.txt"
+    },
+    "train2id.txt": {
+      "bytes": 2248986,
+      "sha256": "ebb888d92106643b8eeaf49d711f6b1223c6accbc7e4bf25a32937778617309d",
+      "url": "https://raw.githubusercontent.com/Wimmics/semantically-enriched-link-prediction-datasets/2a1e389dab08f1239bf946c3d83be7600dc15937/NELL-995%2B/train2id.txt"
+    },
+    "valid2id.txt": {
+      "bytes": 8154,
+      "sha256": "82c76a40abda9f8b134ab5abc563180610305bd9b886f4bd01443ab59fb06584",
+      "url": "https://raw.githubusercontent.com/Wimmics/semantically-enriched-link-prediction-datasets/2a1e389dab08f1239bf946c3d83be7600dc15937/NELL-995%2B/valid2id.txt"
+    }
+  },
+  "source_layout": "head relation tail, no count header",
+  "source_repository": "https://github.com/Wimmics/semantically-enriched-link-prediction-datasets",
+  "source_revision": "2a1e389dab08f1239bf946c3d83be7600dc15937",
+  "source_subdirectory": "NELL-995+",
+  "split_overlap_counts": {
+    "train_test": 0,
+    "train_valid": 0,
+    "valid_test": 0
+  },
+  "upstream_split_repository": "https://github.com/otiliastr/coper/tree/master/CoPER_ConvE/data/nell-995"
+}

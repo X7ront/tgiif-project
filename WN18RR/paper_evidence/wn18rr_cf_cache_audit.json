@@ -1,0 +1,33 @@
+{
+  "cache_path": "/mnt/f/Codex/CTS-Net-TGIIF-WN18RR-clean-20260906/counterfactual_cache/WN18RR_popularity_h1.pt",
+  "cache_version": 2,
+  "triple_fingerprint": "87057de1374525f9a9b8e425714ecfa0b033a8a81b996827797825d166668623",
+  "total_train_triples": 86835,
+  "feature_dimension": 4,
+  "matched_count": 86835,
+  "valid_count": 82504,
+  "matched_ratio": 1.0,
+  "valid_ratio": 0.9501237980077157,
+  "treatment_high_ratio": 0.4916220418034203,
+  "unique_valid_cf_count": 12323,
+  "unique_valid_cf_ratio": 0.1493624551536895,
+  "max_valid_cf_reuse_count": 1506,
+  "distance_threshold": 2.371837615966797,
+  "valid_distance_mean": 0.09046701770840919,
+  "valid_distance_median": 0.0,
+  "valid_distance_p95": 0.5185244083404541,
+  "valid_distance_max": 2.371837615966797,
+  "exact_feature_match_ratio": 0.6696281392417337,
+  "max_distance_percentile": 95.0,
+  "match_neighbor_count": 64,
+  "treatment_fallback_relations": [],
+  "checks": {
+    "cache_triples_equal_train_file": true,
+    "recorded_fingerprint_matches_train_file": true,
+    "all_valid_matches_have_index": true,
+    "all_valid_cf_rows_are_indexed_train_rows": true,
+    "all_valid_cf_features_are_indexed_train_features": true,
+    "same_relation_rate": 1.0,
+    "opposite_treatment_rate": 1.0
+  }
+}

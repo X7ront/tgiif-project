@@ -1,0 +1,81 @@
+{
+  "bounded_residual_abs": {
+    "max": 9.999999747378752e-05,
+    "mean": 2.447286427263436e-05
+  },
+  "bounded_residual_exact_sign_fraction": {
+    "negative": 0.28394858272907053,
+    "positive": 0.0,
+    "zero": 0.7160514172709295
+  },
+  "bounded_residual_sign_fraction": {
+    "negative": 0.24950560316413975,
+    "positive": 0.0,
+    "zero": 0.7504943968358603
+  },
+  "candidate_count": 248442124,
+  "candidate_gate": {
+    "max": 1.0,
+    "mean": 0.9799877109029426,
+    "min": 0.6775762438774109,
+    "std": 0.02021615350783993
+  },
+  "candidate_native_equals_gate_one_fraction": 1.0,
+  "candidate_native_exactly_equals_gate_one_fraction": 1.0,
+  "candidate_saturation_fraction_including_zero_cap": 1.0,
+  "candidate_saturation_fraction_positive_cap": 1.0,
+  "checkpoint": "/mnt/f/Codex/CTS-Net-TGIIF-WN18RR-clean-20260906/checkpoint/ctsnet_v5c_cf_off_ep1000_s23_f005_WN18RR_h1_0.005_Adam_ep1000.ckpt",
+  "invariant_margin_fraction": 0.0001,
+  "positive_cap_candidate_fraction": 0.28394858272907053,
+  "query_all_invariant_same_sign_fraction": 0.956493078444298,
+  "query_cap": {
+    "max": 9.999999747378752e-05,
+    "mean": 2.4472870304701175e-05,
+    "median": 0.0,
+    "min": 0.0,
+    "q25": 0.0,
+    "q75": 5.725700361513833e-26,
+    "std": 4.2991550118272796e-05
+  },
+  "query_count": 6068,
+  "query_gate_mean": {
+    "max": 1.0,
+    "mean": 0.9799877339943349,
+    "median": 0.9843419194221497,
+    "min": 0.8823941349983215,
+    "q25": 0.972899854183197,
+    "q75": 0.9915652424097061,
+    "std": 0.016438258291603832
+  },
+  "query_gate_std": {
+    "max": 0.06481405347585678,
+    "mean": 0.009026691020125299,
+    "median": 0.007334744092077017,
+    "min": 0.0,
+    "q25": 0.003808228997513652,
+    "q75": 0.011620406061410904,
+    "std": 0.0075496429042074716
+  },
+  "query_pre_cap_abs_mean": {
+    "max": 0.07500001788139343,
+    "mean": 0.07499998834674187,
+    "median": 0.07500001788139343,
+    "min": 0.07499652355909348,
+    "q25": 0.07500001788139343,
+    "q75": 0.07500001788139343,
+    "std": 2.395051307200651e-07
+  },
+  "query_saturation_fraction": {
+    "max": 1.0,
+    "mean": 1.0,
+    "median": 1.0,
+    "min": 1.0,
+    "q25": 1.0,
+    "q75": 1.0,
+    "std": 0.0
+  },
+  "residual_multiplier": 0.75,
+  "seed": 23,
+  "split": "valid",
+  "triple_count": 3034
+}

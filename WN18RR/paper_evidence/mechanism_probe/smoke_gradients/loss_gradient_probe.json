@@ -1,0 +1,291 @@
+{
+  "batches": 2,
+  "checkpoint": "/mnt/f/Codex/CTS-Net-TGIIF-WN18RR-clean-20260906/checkpoint/ctsnet_tgiif_local_alignment_ep1000_20260906_WN18RR_h1_0.005_Adam_ep1000.ckpt",
+  "config": "/mnt/f/Codex/CTS-Net-TGIIF-WN18RR-clean-20260906/logs/tgiif_local_alignment_ep1000_20260906/ctsnet_tgiif_local_alignment_ep1000_20260906_config.json",
+  "gradient_cosines": {
+    "cf__orthogonality": {
+      "shared": {
+        "count": 2,
+        "mean": -0.21061886252796605,
+        "sd": 0.893935941158913
+      }
+    },
+    "cf__treatment": {
+      "shared": {
+        "count": 2,
+        "mean": 0.5159803514615057,
+        "sd": 0.5151298911369055
+      }
+    },
+    "residual_rank__cf": {
+      "invariant": {
+        "count": 2,
+        "mean": 0.2952315616227607,
+        "sd": 0.08309613247392589
+      },
+      "shared": {
+        "count": 2,
+        "mean": -0.6764572035656908,
+        "sd": 0.09230053400086444
+      }
+    },
+    "residual_rank__orthogonality": {
+      "shared": {
+        "count": 2,
+        "mean": 0.3005930065276446,
+        "sd": 0.047296760078153775
+      }
+    },
+    "residual_rank__treatment": {
+      "shared": {
+        "count": 2,
+        "mean": -0.5658974303512814,
+        "sd": 0.07429720858836597
+      }
+    },
+    "treatment__orthogonality": {
+      "bias": {
+        "count": 2,
+        "mean": -0.036340169099737876,
+        "sd": 0.004925861941065247
+      },
+      "shared": {
+        "count": 2,
+        "mean": -0.5487316911796866,
+        "sd": 0.31889037186294933
+      }
+    }
+  },
+  "gradient_norms": {
+    "cf": {
+      "baseline": {
+        "mean": 0.0,
+        "nonzero_fraction": 0.0,
+        "sd": 0.0
+      },
+      "bias": {
+        "mean": 0.0,
+        "nonzero_fraction": 0.0,
+        "sd": 0.0
+      },
+      "gate": {
+        "mean": 0.0,
+        "nonzero_fraction": 0.0,
+        "sd": 0.0
+      },
+      "invariant": {
+        "mean": 6.314208098750018e-05,
+        "nonzero_fraction": 1.0,
+        "sd": 2.1270540550357637e-06
+      },
+      "shared": {
+        "mean": 0.0006809306774198041,
+        "nonzero_fraction": 1.0,
+        "sd": 2.682123950840017e-05
+      }
+    },
+    "official_rank": {
+      "baseline": {
+        "mean": 5.357547553174452,
+        "nonzero_fraction": 1.0,
+        "sd": 3.052060653000762
+      },
+      "bias": {
+        "mean": 0.0,
+        "nonzero_fraction": 0.0,
+        "sd": 0.0
+      },
+      "gate": {
+        "mean": 0.0,
+        "nonzero_fraction": 0.0,
+        "sd": 0.0
+      },
+      "invariant": {
+        "mean": 0.0,
+        "nonzero_fraction": 0.0,
+        "sd": 0.0
+      },
+      "shared": {
+        "mean": 0.0,
+        "nonzero_fraction": 0.0,
+        "sd": 0.0
+      }
+    },
+    "orthogonality": {
+      "baseline": {
+        "mean": 0.0,
+        "nonzero_fraction": 0.0,
+        "sd": 0.0
+      },
+      "bias": {
+        "mean": 1.7733275066138922e-07,
+        "nonzero_fraction": 1.0,
+        "sd": 1.2767893922848616e-07
+      },
+      "gate": {
+        "mean": 0.0,
+        "nonzero_fraction": 0.0,
+        "sd": 0.0
+      },
+      "invariant": {
+        "mean": 0.0,
+        "nonzero_fraction": 0.0,
+        "sd": 0.0
+      },
+      "shared": {
+        "mean": 2.0025003050300295e-06,
+        "nonzero_fraction": 1.0,
+        "sd": 9.737953419406947e-07
+      }
+    },
+    "residual_preserve": {
+      "baseline": {
+        "mean": 0.0,
+        "nonzero_fraction": 0.0,
+        "sd": 0.0
+      },
+      "bias": {
+        "mean": 0.0,
+        "nonzero_fraction": 0.0,
+        "sd": 0.0
+      },
+      "gate": {
+        "mean": 0.0011484076313319498,
+        "nonzero_fraction": 1.0,
+        "sd": 0.0003199428761415997
+      },
+      "invariant": {
+        "mean": 0.0035690650480080994,
+        "nonzero_fraction": 1.0,
+        "sd": 0.0009497340132806402
+      },
+      "shared": {
+        "mean": 0.19326550187775865,
+        "nonzero_fraction": 1.0,
+        "sd": 0.056580024304477554
+      }
+    },
+    "residual_rank": {
+      "baseline": {
+        "mean": 0.0,
+        "nonzero_fraction": 0.0,
+        "sd": 0.0
+      },
+      "bias": {
+        "mean": 0.0,
+        "nonzero_fraction": 0.0,
+        "sd": 0.0
+      },
+      "gate": {
+        "mean": 0.0006594590233998253,
+        "nonzero_fraction": 1.0,
+        "sd": 0.0001935517893762237
+      },
+      "invariant": {
+        "mean": 0.0019981445753045578,
+        "nonzero_fraction": 1.0,
+        "sd": 0.0007325854154414205
+      },
+      "shared": {
+        "mean": 0.0764815273625528,
+        "nonzero_fraction": 1.0,
+        "sd": 0.019974414881305032
+      }
+    },
+    "treatment": {
+      "baseline": {
+        "mean": 0.0,
+        "nonzero_fraction": 0.0,
+        "sd": 0.0
+      },
+      "bias": {
+        "mean": 0.0049283825539752826,
+        "nonzero_fraction": 1.0,
+        "sd": 0.004118203343931856
+      },
+      "gate": {
+        "mean": 0.0,
+        "nonzero_fraction": 0.0,
+        "sd": 0.0
+      },
+      "invariant": {
+        "mean": 0.0,
+        "nonzero_fraction": 0.0,
+        "sd": 0.0
+      },
+      "shared": {
+        "mean": 0.08399817576327905,
+        "nonzero_fraction": 1.0,
+        "sd": 0.04720001877712273
+      }
+    }
+  },
+  "loss_weights": {
+    "cf": 0.1,
+    "official_rank": 1.0,
+    "orthogonality": 0.01,
+    "residual_preserve": 1.0,
+    "residual_rank": 1.0,
+    "treatment": 0.1
+  },
+  "optimizer_steps": 0,
+  "parameter_names": {
+    "baseline": [
+      "sf_lin_layer.dense1.weight",
+      "sf_lin_layer.dense1.bias",
+      "sf_lin_layer.norm1.weight",
+      "sf_lin_layer.norm1.bias",
+      "sf_lin_layer.dense2.weight",
+      "sf_lin_layer.dense2.bias",
+      "sf_lin_layer.norm2.weight",
+      "sf_lin_layer.norm2.bias",
+      "sf_lin_layer.dense3.weight",
+      "sf_lin_layer.dense3.bias",
+      "sf_lin_layer.norm3.weight",
+      "sf_lin_layer.norm3.bias",
+      "lin.weight",
+      "lin.bias"
+    ],
+    "bias": [
+      "bias_encoder.dense1.weight",
+      "bias_encoder.dense1.bias",
+      "bias_encoder.norm1.weight",
+      "bias_encoder.norm1.bias",
+      "bias_encoder.dense2.weight",
+      "bias_encoder.dense2.bias",
+      "bias_encoder.norm2.weight",
+      "bias_encoder.norm2.bias",
+      "bias_delta_head.weight",
+      "bias_delta_head.bias",
+      "treatment_head.weight",
+      "treatment_head.bias"
+    ],
+    "gate": [
+      "gate_head.weight",
+      "gate_head.bias"
+    ],
+    "invariant": [
+      "invariant_encoder.dense1.weight",
+      "invariant_encoder.dense1.bias",
+      "invariant_encoder.norm1.weight",
+      "invariant_encoder.norm1.bias",
+      "invariant_encoder.dense2.weight",
+      "invariant_encoder.dense2.bias",
+      "invariant_encoder.norm2.weight",
+      "invariant_encoder.norm2.bias",
+      "invariant_delta_head.weight",
+      "invariant_delta_head.bias"
+    ],
+    "shared": [
+      "residual_shared_encoder.dense1.weight",
+      "residual_shared_encoder.dense1.bias",
+      "residual_shared_encoder.norm1.weight",
+      "residual_shared_encoder.norm1.bias",
+      "residual_shared_encoder.dense2.weight",
+      "residual_shared_encoder.dense2.bias",
+      "residual_shared_encoder.norm2.weight",
+      "residual_shared_encoder.norm2.bias"
+    ]
+  },
+  "predictor_eval_mode": true
+}

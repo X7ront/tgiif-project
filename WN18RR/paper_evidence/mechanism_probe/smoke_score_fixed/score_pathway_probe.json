@@ -1,0 +1,93 @@
+{
+  "artifacts": {
+    "group_metrics": "paper_evidence/mechanism_probe/smoke_score_fixed/group_metrics.csv",
+    "query_ranks": "paper_evidence/mechanism_probe/smoke_score_fixed/query_ranks.csv"
+  },
+  "checkpoint": "/mnt/f/Codex/CTS-Net-TGIIF-WN18RR-clean-20260906/checkpoint/ctsnet_tgiif_local_alignment_ep1000_20260906_WN18RR_h1_0.005_Adam_ep1000.ckpt",
+  "invariant_margin_fraction": 0.0001,
+  "metrics": {
+    "baseline_m0": {
+      "count": 40,
+      "delta_mrr_vs_baseline_m0": 0.0,
+      "hits1": 0.65,
+      "hits10": 0.65,
+      "hits3": 0.65,
+      "mr": 5902.0,
+      "mrr": 0.6500372791916966
+    },
+    "gate_one": {
+      "count": 40,
+      "delta_mrr_vs_baseline_m0": 0.09998388863660757,
+      "hits1": 0.75,
+      "hits10": 0.75,
+      "hits3": 0.75,
+      "mr": 4635.4,
+      "mrr": 0.7500211678283042
+    },
+    "gate_query_mean": {
+      "count": 40,
+      "delta_mrr_vs_baseline_m0": 0.09998388863660757,
+      "hits1": 0.75,
+      "hits10": 0.75,
+      "hits3": 0.75,
+      "mr": 4635.4,
+      "mrr": 0.7500211678283042
+    },
+    "gate_shuffled": {
+      "count": 40,
+      "delta_mrr_vs_baseline_m0": 0.07498822740786759,
+      "hits1": 0.725,
+      "hits10": 0.725,
+      "hits3": 0.725,
+      "mr": 4779.425,
+      "mrr": 0.7250255065995642
+    },
+    "invariant_shuffled": {
+      "count": 40,
+      "delta_mrr_vs_baseline_m0": 0.0999822163300037,
+      "hits1": 0.75,
+      "hits10": 0.75,
+      "hits3": 0.75,
+      "mr": 5285.85,
+      "mrr": 0.7500194955217003
+    },
+    "invariant_sign_flip": {
+      "count": 40,
+      "delta_mrr_vs_baseline_m0": 0.09998278164581187,
+      "hits1": 0.75,
+      "hits10": 0.75,
+      "hits3": 0.75,
+      "mr": 4831.775,
+      "mrr": 0.7500200608375085
+    },
+    "native": {
+      "count": 40,
+      "delta_mrr_vs_baseline_m0": 0.09998225816129491,
+      "hits1": 0.75,
+      "hits10": 0.75,
+      "hits3": 0.75,
+      "mr": 5232.95,
+      "mrr": 0.7500195373529915
+    },
+    "popularity_zero": {
+      "count": 40,
+      "delta_mrr_vs_baseline_m0": 0.09998388863660757,
+      "hits1": 0.75,
+      "hits10": 0.75,
+      "hits3": 0.75,
+      "mr": 4635.4,
+      "mrr": 0.7500211678283042
+    }
+  },
+  "paired_cluster_bootstrap": {},
+  "popularity_quartile_edges": [
+    4.098590672016144,
+    4.6478002071380615,
+    6.133929252624512
+  ],
+  "residual_multiplier": 0.75,
+  "seed": 23,
+  "split": "valid",
+  "strict_filtered_rank": true,
+  "triple_count": 20
+}

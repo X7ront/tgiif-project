@@ -1,0 +1,150 @@
+{
+  "artifacts": {
+    "group_metrics": "paper_evidence/mechanism_probe/score_pathways/cf_off_s23/group_metrics.csv",
+    "query_ranks": "paper_evidence/mechanism_probe/score_pathways/cf_off_s23/query_ranks.csv"
+  },
+  "checkpoint": "/mnt/f/Codex/CTS-Net-TGIIF-WN18RR-clean-20260906/checkpoint/ctsnet_v5c_cf_off_ep1000_s23_f005_WN18RR_h1_0.005_Adam_ep1000.ckpt",
+  "invariant_margin_fraction": 0.0001,
+  "metrics": {
+    "baseline_m0": {
+      "count": 6068,
+      "delta_mrr_vs_baseline_m0": 0.0,
+      "hits1": 0.8828279499011207,
+      "hits10": 0.8846407382992749,
+      "hits3": 0.8843111404087014,
+      "mr": 1316.778180619644,
+      "mrr": 0.8836779982600567
+    },
+    "gate_one": {
+      "count": 6068,
+      "delta_mrr_vs_baseline_m0": 0.04020382708624748,
+      "hits1": 0.9230388925510876,
+      "hits10": 0.924851680949242,
+      "hits3": 0.9245220830586685,
+      "mr": 927.40804218853,
+      "mrr": 0.9238818253463041
+    },
+    "gate_query_mean": {
+      "count": 6068,
+      "delta_mrr_vs_baseline_m0": 0.04020382708624748,
+      "hits1": 0.9230388925510876,
+      "hits10": 0.924851680949242,
+      "hits3": 0.9245220830586685,
+      "mr": 927.40804218853,
+      "mrr": 0.9238818253463041
+    },
+    "gate_shuffled": {
+      "count": 6068,
+      "delta_mrr_vs_baseline_m0": 0.04020382708624748,
+      "hits1": 0.9230388925510876,
+      "hits10": 0.924851680949242,
+      "hits3": 0.9245220830586685,
+      "mr": 927.40804218853,
+      "mrr": 0.9238818253463041
+    },
+    "invariant_shuffled": {
+      "count": 6068,
+      "delta_mrr_vs_baseline_m0": 0.04020382708624748,
+      "hits1": 0.9230388925510876,
+      "hits10": 0.924851680949242,
+      "hits3": 0.9245220830586685,
+      "mr": 927.40804218853,
+      "mrr": 0.9238818253463041
+    },
+    "invariant_sign_flip": {
+      "count": 6068,
+      "delta_mrr_vs_baseline_m0": 0.04020382708624748,
+      "hits1": 0.9230388925510876,
+      "hits10": 0.924851680949242,
+      "hits3": 0.9245220830586685,
+      "mr": 927.40804218853,
+      "mrr": 0.9238818253463041
+    },
+    "native": {
+      "count": 6068,
+      "delta_mrr_vs_baseline_m0": 0.04020382708624748,
+      "hits1": 0.9230388925510876,
+      "hits10": 0.924851680949242,
+      "hits3": 0.9245220830586685,
+      "mr": 927.40804218853,
+      "mrr": 0.9238818253463041
+    },
+    "popularity_zero": {
+      "count": 6068,
+      "delta_mrr_vs_baseline_m0": 0.04020382708624748,
+      "hits1": 0.9230388925510876,
+      "hits10": 0.924851680949242,
+      "hits3": 0.9245220830586685,
+      "mr": 927.40804218853,
+      "mrr": 0.9238818253463041
+    }
+  },
+  "paired_cluster_bootstrap": {
+    "baseline_m0": {
+      "bootstrap_repetitions": 2000,
+      "cluster_bootstrap_ci95": [
+        0.03443668186079358,
+        0.04580603954844445
+      ],
+      "native_minus_variant_mrr": 0.04020382708624748
+    },
+    "gate_one": {
+      "bootstrap_repetitions": 2000,
+      "cluster_bootstrap_ci95": [
+        0.0,
+        0.0
+      ],
+      "native_minus_variant_mrr": 0.0
+    },
+    "gate_query_mean": {
+      "bootstrap_repetitions": 2000,
+      "cluster_bootstrap_ci95": [
+        0.0,
+        0.0
+      ],
+      "native_minus_variant_mrr": 0.0
+    },
+    "gate_shuffled": {
+      "bootstrap_repetitions": 2000,
+      "cluster_bootstrap_ci95": [
+        0.0,
+        0.0
+      ],
+      "native_minus_variant_mrr": 0.0
+    },
+    "invariant_shuffled": {
+      "bootstrap_repetitions": 2000,
+      "cluster_bootstrap_ci95": [
+        0.0,
+        0.0
+      ],
+      "native_minus_variant_mrr": 0.0
+    },
+    "invariant_sign_flip": {
+      "bootstrap_repetitions": 2000,
+      "cluster_bootstrap_ci95": [
+        0.0,
+        0.0
+      ],
+      "native_minus_variant_mrr": 0.0
+    },
+    "popularity_zero": {
+      "bootstrap_repetitions": 2000,
+      "cluster_bootstrap_ci95": [
+        0.0,
+        0.0
+      ],
+      "native_minus_variant_mrr": 0.0
+    }
+  },
+  "popularity_quartile_edges": [
+    2.890371799468994,
+    3.7841897010803223,
+    4.653960347175598
+  ],
+  "residual_multiplier": 0.75,
+  "seed": 23,
+  "split": "valid",
+  "strict_filtered_rank": true,
+  "triple_count": 3034
+}

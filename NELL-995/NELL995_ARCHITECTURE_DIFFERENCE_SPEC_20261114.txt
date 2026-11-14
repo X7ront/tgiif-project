@@ -1,0 +1,1223 @@
+NELL-995 所采用 TGIIF 架构与原始 TGIIF 架构差异说明书
+======================================================================
+
+文档版本：2026-11-14
+文档性质：技术架构说明书
+适用范围：原始 TGIIF 参考架构与 NELL-995 实际采用 checkpoint 的结构、训练路径、参数配置、推理融合和 checkpoint 组织差异
+
+说明：
+1. 本文只描述实际实现和可复核证据，不讨论论文结构、章节安排或写作方式。
+2. 本文中的“原始 TGIIF”特指 CTS-Net-TGIIF-WN18RR-clean-20260906
+   包中的 canonical TGIIF 实现，而不是历史 V4/V6/V7/V8/V9 等探索分支。
+3. 本文中的“NELL-995 实际采用架构”特指下列 checkpoint：
+
+   checkpoint\ctsnet_tgiif_nell995_hybrid_base4000_gradscale001_treatmentoff_adapter500_s23.ckpt
+
+4. 若文件、参数名或张量名同时存在英文和中文表述，优先保留代码中的英文名，
+   以避免二次工具处理时产生歧义。
+
+
+1. 技术结论摘要
+======================================================================
+
+1. NELL-995 没有引入一套全新的神经网络类，也没有替换 TGIIF 的基本模块形状。
+   它采用的仍是 CTSNetTreatmentAwareResidualPredictor 所定义的同构主干。
+
+2. 两套架构的核心区别不是“是否有残差分支”，而是残差分支的训练来源、
+   门控是否参与排名、残差数值如何校准、如何处理 baseline 的 exact ties，
+   以及最终 checkpoint 如何由两份不同训练结果重组。
+
+3. 原始 TGIIF 的 canonical 路径采用 learned gate：
+
+       invariant 分支的排名贡献 = gate * delta_inv
+
+   NELL-995 选中的 checkpoint 采用 ungated invariant-margin 路径：
+
+       invariant 分支的排名贡献 = delta_inv
+
+   这里的“ungated”表示绕过 learned gate 对 invariant 排名信号的缩放，
+   不表示删除 gate_head，也不表示删除 treatment 分支。
+
+4. NELL-995 的 bias/treatment/gate 子网络仍存在于 checkpoint 中，
+   但选中的 Treatment-off 变体不通过 treatment classification 损失训练，
+   且在 invariant-margin 推理中不直接改变最终排名。
+
+5. 原始 canonical TGIIF 是单次联合训练的整体模型；
+   NELL-995 实际 checkpoint 是两来源张量组合：
+
+       23 个 official scorer 状态项
+       +
+       44 个非 official 状态项
+       =
+       67 个 state_dict 状态项
+
+   其中 44 个非 official 状态项包含 adapter 参数、基础常量、持久化 buffer
+   和配置标记，不应全部理解为可学习 adapter 张量。
+
+6. 选中的 NELL-995 checkpoint 在训练时使用 invariant-margin fraction = 0.001，
+   在匹配测试评测时使用 fraction = 0.05、residual multiplier m = 1.0，
+   并以同一 checkpoint 的 m = 0 作为基线控制。
+
+7. 两套架构的最终数学形式都属于 baseline 加有界修正：
+
+       S = S0 + bounded_delta
+
+   差异集中在 bounded_delta 的来源、门控、tie policy、RMS 校准、
+   margin 上限和训练目标，而不是最终输出的总体加法形式。
+
+
+2. 共同基础：TGIIF 的计算对象和官方评分路径
+======================================================================
+
+2.1 输入特征
+----------------------------------------------------------------------
+
+两套架构均采用 triple feature 和 hash_hops = 1。此时输入 subgraph_feature
+的维度为：
+
+    dim = hash_hops * (hash_hops^2 + 3)
+        = 1 * (1 + 3)
+        = 4
+
+因此单候选输入可写为：
+
+    x in R^4
+
+两套架构均从该四维 intersection/subgraph feature 出发，
+但后续残差路径的 normalize、gating 和融合策略不同。
+
+
+2.2 官方评分器主路径
+----------------------------------------------------------------------
+
+共同 official path 的结构与 OpenKE LinkPredictor 保持一致：
+
+    4
+    -> Linear(4, 128)
+    -> BatchNorm1d(128)
+    -> ReLU
+    -> Linear(128, 128)
+    -> BatchNorm1d(128)
+    -> ReLU
+    -> Linear(128, 128)
+    -> BatchNorm1d(128)
+    -> ReLU
+    -> Linear(128, 1)
+    -> base_logit
+
+在历史评测空间中再执行：
+
+    S0 = sigmoid(base_logit)
+
+official path 共包含 23 个 state_dict 状态项，包括：
+
+    Linear weight/bias
+    BatchNorm weight/bias/running_mean/running_var/num_batches_tracked
+    最终 Linear(128, 1) 的 weight/bias
+
+两套架构中，official path 都使用 BatchNorm。训练时 counterfactual 特征
+不会更新 official BatchNorm 的 running statistics；只有 factual+negative
+rank batch 更新这些统计量。
+
+
+2.3 独立残差主干
+----------------------------------------------------------------------
+
+official path 之外还有一条独立的残差主干：
+
+    x
+    -> Linear(4, 128)
+    -> LayerNorm(128)
+    -> ReLU
+    -> Linear(128, 128)
+    -> LayerNorm(128)
+    -> ReLU
+    -> h in R^128
+
+该主干使用 LayerNorm，不共享 official path 的 BatchNorm 统计量。
+其作用是生成 structural residual representation，而不是替代 official scorer。
+
+
+3. 原始 TGIIF 架构
+======================================================================
+
+3.1 模块组成
+----------------------------------------------------------------------
+
+原始 canonical TGIIF 使用：
+
+    CTSNetTreatmentAwareResidualPredictor
+
+完整模块包括：
+
+    A. official scorer
+       x -> official MLP -> base_logit -> S0
+
+    B. independent residual stem
+       x -> LayerNorm MLP -> h
+
+    C. invariant encoder
+       h -> z_inv in R^64
+
+    D. bias encoder
+       [h; popularity] -> z_bias in R^64
+
+    E. invariant delta head
+       z_inv -> delta_inv
+
+    F. bias delta head
+       z_bias -> delta_bias
+
+    G. treatment head
+       z_bias -> treatment_logit
+
+    H. gate head
+       [h; popularity] -> gate_logit -> gate
+
+treatment-aware 模型中的 popularity 只来自训练三元组的端点度数，
+不是 validation/test 图统计。popularity 定义可概括为：
+
+    endpoint_log_degree[e] = log(1 + train_degree[e])
+
+    raw_popularity(h, t) =
+        endpoint_log_degree[h] + endpoint_log_degree[t]
+
+    popularity =
+        clamp(
+            (raw_popularity - train_popularity_mean)
+            / train_popularity_std,
+            -5,
+            5
+        )
+
+invariant 分支只观察 h；bias 分支和 gate 观察 [h; popularity]。
+
+
+3.2 原始 forward 数据流
+----------------------------------------------------------------------
+
+记：
+
+    h        = residual_shared_encoder(x)
+    z_inv    = invariant_encoder(h)
+    z_bias   = bias_encoder([h; popularity])
+
+    delta_inv  = invariant_delta_head(z_inv)
+    delta_bias = bias_delta_head(z_bias)
+
+    gate = sigmoid(gate_head([h; popularity]) / gate_temperature)
+
+原始 learned-gate invariant-margin 路径为：
+
+    invariant_contribution = gate * delta_inv
+    bias_contribution      = (1 - gate) * delta_bias
+
+    mixed_delta = invariant_contribution
+
+因此，在 canonical invariant-margin 模式中：
+
+1. bias 分支不直接进入最终分数；
+2. bias 分支保留为 auxiliary treatment/orthogonality 路径；
+3. invariant 排名信号仍受 learned gate 调节；
+4. 若 gate 趋近 0，invariant 排名信号会被显著压低；
+5. 若 gate 趋近 1，invariant 排名信号基本完整通过。
+
+原始 additive 模式则是：
+
+    mixed_delta =
+        gate * delta_inv
+        +
+        (1 - gate) * delta_bias
+
+但 WN18RR canonical 路径采用 invariant-margin，而不是 additive 主路径。
+
+
+3.3 原始残差后处理
+----------------------------------------------------------------------
+
+原始 canonical WN18RR 配置的默认残差处理为：
+
+    delta_normalization = none
+    center_residual = false
+    preserve_base_ties = false
+    break_base_ties = false
+    floor_residual_at_baseline_min = false
+    residual_max_top_gap_ratio = none
+    residual_scale = 0.1
+    invariant_margin_fraction = 0.25
+
+其基本形式是：
+
+    unit_delta = residual_scale * tanh(mixed_delta)
+    bounded_delta = m * unit_delta
+
+invariant-margin 模式下再按 query 的 baseline score range 截断：
+
+    score_range = max(S0) - min(S0)
+    cap = invariant_margin_fraction * score_range
+    bounded_delta = clamp(bounded_delta, -cap, cap)
+
+最终概率空间分数为：
+
+    S = S0 + bounded_delta
+
+其中 m 是 residual multiplier。m = 0 时：
+
+    S = S0
+
+
+3.4 原始训练方式
+----------------------------------------------------------------------
+
+WN18RR canonical 采用从零开始的整体训练：
+
+    official path
+    + residual stem
+    + invariant branch
+    + bias branch
+    + gate
+    + treatment head
+
+共同参与训练。
+
+canonical 1000-epoch runner 的主要配置为：
+
+    dataset                     WN18RR
+    epochs                      1000
+    optimizer                   Adam
+    learning rate               0.005
+    margin                      5.0
+    hash_hops                   1
+    feature_mode                triple
+    hidden_dim                  128
+    branch_dim                  64
+    fusion_mode                 invariant-margin
+    invariant_margin_fraction   0.25
+    residual_scale              0.1
+    delta_normalization         none
+    residual_loss_schedule      auxiliary
+    residual_start_epoch        100
+    residual_warmup_epochs      100
+    residual_hard_negatives     5
+    residual_near_tie_negatives 0
+    treatment_supervision       factual
+    lambda_cf                   0.1
+    lambda_treat                0.1
+    lambda_orth                 0.01
+    lambda_residual_rank        1.0
+    lambda_residual_preserve    1.0
+    lambda_gate                 0.0
+    gate_regularizer            sample-kl
+    gate_target                 0.5
+
+训练损失的基本组成为：
+
+    total =
+        official rank loss
+        + lambda_cf       * counterfactual loss
+        + lambda_treat    * treatment classification loss
+        + lambda_orth     * invariant/bias orthogonality loss
+        + lambda_residual_rank     * residual rank loss
+        + lambda_residual_preserve * baseline preservation loss
+        + normalizer/gate-related optional terms
+
+原始 canonical 的主要特点可以概括为：
+
+    整体联合优化
+    + treatment classification 有效
+    + learned gate 有效
+    + hard-negative mining
+    + delta_normalization = none
+    + 不强制 exact baseline ties 保持相等
+
+
+4. NELL-995 实际采用架构
+======================================================================
+
+4.1 网络类与形状
+----------------------------------------------------------------------
+
+NELL-995 选中的 hybrid checkpoint 仍加载为：
+
+    CTSNetTreatmentAwareResidualPredictor
+
+其 official path、residual stem、invariant encoder、bias encoder、
+delta heads、treatment head 和 gate head 的张量形状与原始 treatment-aware
+架构相同。
+
+因此，以下两个陈述必须区分：
+
+    陈述 A：
+    NELL-995 采用了一个新网络类。
+
+    事实：
+    不成立。NELL-995 使用的是同一个 treatment-aware 网络类。
+
+    陈述 B：
+    NELL-995 在相同网络骨架上改变了参数来源、有效门控路径、
+    residual calibration、tie policy、损失权重和 checkpoint 组合方式。
+
+    事实：
+    成立。
+
+
+4.2 NELL-995 checkpoint 的两来源结构
+----------------------------------------------------------------------
+
+选中的最终 checkpoint 来自两份训练结果：
+
+    来源 1：成熟 official scorer
+    文件：
+    checkpoint\ctsnet_tgiif_nell995_full_ep4000_cloud_s23_NELL-995_h1_0.005_Adam_ep4000.ckpt
+
+    训练预算：
+    4000 epochs
+
+    在最终组合中使用的内容：
+    仅 sf_lin_layer.* 与 lin.* 共 23 个 official 状态项
+
+    来源 2：adapter source
+    文件：
+    checkpoint\ctsnet_tgiif_nell995_safe_gradscale001_cfdt005_treatmentoff_ep500_s23_NELL-995_h1_0.005_Adam_ep500.ckpt
+
+    训练预算：
+    500 epochs
+
+    在最终组合中使用的内容：
+    除 official prefix 外的全部状态项
+
+组合后的文件：
+
+    checkpoint\ctsnet_tgiif_nell995_hybrid_base4000_gradscale001_treatmentoff_adapter500_s23.ckpt
+
+组合脚本执行以下检查：
+
+1. adapter 中必须存在 23 个 official-prefix 状态项；
+2. 每个 official 状态项必须从 mature official checkpoint 取得；
+3. shape 必须一致；
+4. 组合后的每个 official tensor 必须与 mature source 逐元素相等；
+5. 组合后的每个非 official tensor 必须与 adapter source 逐元素相等；
+6. 生成 composition JSON，记录 source paths、SHA256 和状态项数量。
+
+
+4.3 必须区分的“组合冻结”和“训练冻结”
+----------------------------------------------------------------------
+
+最终 hybrid checkpoint 在推理时是一个静态模型：
+
+    official tensor 固定为 mature source
+    adapter-side tensor 固定为 adapter source
+
+但从优化过程看，不能把选中的 500-epoch adapter source 描述成
+“在与成熟 4000-epoch scorer 联合且评分器被冻结的条件下训练出的 adapter”。
+
+依据是选中 adapter source 的真实配置：
+
+    init_official_checkpoint = null
+    baseline_lr_multiplier = 1.0
+
+这意味着 adapter source 是一个从自身初始化开始训练的完整 treatment-aware
+TGIIF 模型；其 official path 在该 500-epoch 训练中也按 baseline_lr_multiplier
+参与优化。训练结束后，只保留其非 official 状态项，再把其 official path
+整体替换为 mature 4000-epoch source。
+
+更准确的术语是：
+
+    “两来源 tensor composition”
+    或
+    “mature scorer + separately trained residual adapter composition”
+
+更不准确的表述是：
+
+    “在冻结成熟 scorer 的同时完成了全部 500-epoch adapter 训练”
+
+代码中虽然存在 --init-official-checkpoint 接口，但该接口本身的实现是：
+
+1. 只加载 official-prefix tensor；
+2. 重新初始化 adapter；
+3. 不自动冻结 official path；
+4. 不改变 baseline_lr_multiplier。
+
+若要严格实施“固定成熟 scorer 训练 adapter”，还需要额外把 official path
+的优化关闭或把 baseline learning-rate multiplier 设为 0。该冻结优化并非
+本说明书所述选中 checkpoint 的实际配置。
+
+
+4.4 NELL-995 选中的有效 forward
+----------------------------------------------------------------------
+
+模型仍计算：
+
+    z_inv   = invariant_encoder(h)
+    z_bias  = bias_encoder([h; popularity])
+    delta_inv  = invariant_delta_head(z_inv)
+    delta_bias = bias_delta_head(z_bias)
+    gate = sigmoid(gate_head([h; popularity]))
+    treatment_logit = treatment_head(z_bias)
+
+但选中配置为：
+
+    fusion_mode = invariant-margin
+    invariant_margin_ungated = true
+
+因此实际排名贡献为：
+
+    invariant_contribution = delta_inv
+    bias_contribution      = (1 - gate) * delta_bias
+    mixed_delta            = invariant_contribution
+                            = delta_inv
+
+换言之：
+
+1. gate 仍被计算，但不乘到 invariant_delta 上；
+2. bias_contribution 仍可被计算，但不进入 mixed_delta；
+3. treatment_logit 仍可被计算，但不改变最终分数；
+4. 真正控制最终排名修正的是 invariant_delta。
+
+与原始 learned-gate invariant-margin 相比，核心公式差异为：
+
+    原始：
+    mixed_delta = gate * delta_inv
+
+    NELL-995 选中：
+    mixed_delta = delta_inv
+
+
+4.5 NELL-995 的残差后处理
+----------------------------------------------------------------------
+
+query-level ranking 时，NELL-995 依次执行以下处理：
+
+步骤 1：exact baseline tie grouping
+
+    对所有 baseline 分数完全相等的候选组成 tie group。
+    在 preserve_base_ties = true 时，组内每个候选取得相同的
+    mixed_delta 组均值。
+
+步骤 2：query centering
+
+    centered_delta =
+        grouped_delta - mean(grouped_delta)
+
+该操作使单个 query 的修正均值为 0。
+
+步骤 3：query-RMS shrink
+
+    rms = sqrt(mean(centered_delta^2))
+    divisor = max(1, rms / delta_target_rms)
+    calibrated_delta = centered_delta / divisor
+
+该操作只缩小过大的残差，不放大 RMS 已经低于目标的残差。
+
+本 checkpoint 的：
+
+    delta_target_rms = 0.05
+
+步骤 4：bounded unit residual
+
+    unit_delta =
+        residual_scale * tanh(calibrated_delta)
+
+其中：
+
+    residual_scale = 0.1
+
+步骤 5：residual multiplier
+
+    bounded_delta = m * unit_delta
+
+步骤 6：invariant-margin cap
+
+    score_range = max(S0) - min(S0)
+    cap = invariant_margin_fraction * score_range
+    bounded_delta = clamp(bounded_delta, -cap, cap)
+
+步骤 7：baseline minimum floor
+
+    若候选属于 baseline minimum score group：
+        final_score = S0
+
+    否则若 S0 + bounded_delta < baseline_min：
+        final_score = S0
+
+    否则：
+        final_score = S0 + bounded_delta
+
+该 floor 保护的是 baseline 最低分数组，不是 top-1 group。
+
+最终：
+
+    S = S0 + bounded_delta
+
+评测配置中：
+
+    invariant_margin_fraction = 0.05
+    m = 1.0
+
+训练配置中：
+
+    invariant_margin_fraction = 0.001
+
+因此训练与最终测试使用不同的 margin cap，不能把 0.001 误写成测试 cap，
+也不能把 0.05 误写成该 checkpoint 的训练 cap。
+
+
+4.6 exact-tie policy 的作用
+----------------------------------------------------------------------
+
+NELL-995 的 preserve_base_ties 不是普通的数值平滑，而是明确的排名约束：
+
+    baseline 分数完全相同的候选
+    -> 分配到同一个 tie group
+    -> 组内 residual 取相同值
+    -> 加上相同的 base score 后仍保持为 exact tie
+
+因此 residual 不能通过浮点尾差把同一 baseline equivalence class
+任意拆开。
+
+该机制与以下配置共同工作：
+
+    preserve_base_ties = true
+    break_base_ties = false
+    center_residual = true
+    floor_residual_at_baseline_min = true
+
+它们共同构成 NELL-995 的 tie-safe residual path。
+
+
+5. NELL-995 adapter source 的实际训练配置
+======================================================================
+
+5.1 基本训练信息
+----------------------------------------------------------------------
+
+    dataset                         NELL-995
+    split source                    OpenKE NELL-995
+    seed                            23
+    adapter epochs                  500
+    optimizer                       Adam
+    learning rate                   0.005
+    margin                          0.5
+    hash_hops                       1
+    feature_mode                    triple
+    hidden_dim                      128
+    branch_dim                      64
+    batch sampling                  nbatches = 100
+    sampled negatives               neg_ent = 25
+
+
+5.2 网络与 residue 配置
+----------------------------------------------------------------------
+
+    treatment_aware                 true
+    fusion_mode                     invariant-margin
+    invariant_margin_ungated        true
+    invariant_margin_fraction       0.001
+    residual_scale                  0.1
+    delta_normalization             query-rms
+    delta_target_rms                0.05
+    delta_temperature               1.0
+    delta_limit                     null
+    gate_temperature                1.0
+    score_space                     probability
+    baseline_rank_score_space       probability
+    center_residual                 true
+    preserve_base_ties              true
+    break_base_ties                 false
+    floor_residual_at_baseline_min  true
+    residual_max_top_gap_ratio      null
+    structural_abstention           false
+
+
+5.3 负样本和 residual loss 配置
+----------------------------------------------------------------------
+
+    residual_start_epoch            100
+    residual_warmup_epochs          150
+    residual_loss_schedule          auxiliary
+    residual_hard_negatives         0
+    residual_near_tie_negatives     25
+    residual_tie_band               0.05
+    residual_min_treatment_gap      0.0
+    residual_exclude_exact_ties     false
+    lambda_residual_rank            1.0
+    lambda_residual_preserve        2.0
+    lambda_delta_magnitude          0.0
+
+NELL-995 不使用 generic hard-negative mining；它改为选取 baseline
+score 最接近的 25 个 candidates，并用 tie band 聚焦 near-tie 区域。
+
+该训练过程的有效 residual multiplier 从 epoch 100 开始启用，
+并在后续 150 个 epoch 内逐步增加。adapter auxiliary losses 另有
+epoch 5--15 的 warmup 机制。两者不能混写为同一个 warmup。
+
+
+5.4 treatment、CF 和正交性配置
+----------------------------------------------------------------------
+
+    treatment_supervision           factual
+    lambda_treat                    0.0
+    treatment_shared_gradient_scale 0.01
+    lambda_cf                       0.1
+    cf_distance_temperature         0.05
+    cf_objective                    legacy
+    lambda_orth                     0.01
+
+这里的 Treatment-off 应解释为：
+
+    treatment classification 的加权目标权重为 0
+
+不能解释为：
+
+    treatment_head 被删除
+    bias_encoder 被删除
+    gate_head 被删除
+    checkpoint 不再包含 treatment 相关状态项
+
+实际上，treatment_head、bias_encoder 和 gate_head 的参数仍然存在。
+Treatment-off 是目标权重层面的配置，不是网络模块删除。
+
+treatment_shared_gradient_scale = 0.01 也属于训练配置残留项。
+在 lambda_treat = 0 时，它不会产生 treatment classification 梯度；
+但它仍反映该 adapter source 的 bias/shared 路径设计。
+
+CF 项仍有效：
+
+    lambda_cf = 0.1
+
+正交项仍有效：
+
+    lambda_orth = 0.01
+
+因此该 checkpoint 不能被描述成“完全取消所有辅助监督”。
+准确说法是：
+
+    treatment classification 关闭
+    counterfactual consistency 保留
+    invariant/bias orthogonality 保留
+
+
+6. 原始 TGIIF 与 NELL-995 的逐项差异
+======================================================================
+
+项目                         原始 canonical TGIIF              NELL-995 选中架构
+--------------------------------------------------------------------------------------------
+网络类                       TreatmentAware Residual          同一 TreatmentAware 类
+official path                联合训练                          23 项取自成热 4000ep source
+adapter 参数来源             同一整体训练结果                  另一份 500ep source
+训练组织                     单阶段联合训练                    两来源 tensor composition
+组合后 scorer                可继续训练                        静态 mature scorer tensor
+checkpoint 总状态项          62                               67
+official 状态项              23                               23
+非 official 状态项           39                               44
+学习型 residual 状态项       32                               32
+额外持久化配置 buffer        5                                10
+fusion mode                  invariant-margin                 invariant-margin
+gate 对 invariant 的作用     乘法门控                         绕过
+gate 是否保留               是                               是，但仅辅助/诊断
+bias 是否进入最终分数        否                               否
+treatment classification     有效                             lambda_treat = 0
+treatment 模块是否保留       是                               是
+margin                       5.0                              0.5
+residual start               100                              100
+residual warmup              100                              150
+delta normalization          none                             query-rms
+RMS target                   n/a                              0.05
+center residual              false                            true
+preserve exact base ties     false                            true
+baseline-min floor           false                            true
+generic hard negatives       5                                0
+near-tie negatives           0                                25
+residual tie band            0.0                              0.05
+lambda residual rank         1.0                              1.0
+lambda residual preserve     1.0                              2.0
+lambda delta magnitude       default off                      0.0
+training margin fraction     0.25                             0.001
+test margin fraction         runner-dependent                 0.05
+final test multiplier        runner-dependent                 1.0
+matched control              各自 runner 的 m=0               同一 checkpoint m=0
+score space                  probability                      probability
+
+该表的核心含义：
+
+1. 网络形状变化很小；
+2. 有效排名路径、参数来源和训练策略变化很大；
+3. 两套架构的差别主要属于“同一骨架上选择了不同的训练与融合机制”；
+4. 不应把 NELL-995 描述成与 TGIIF 无关的另一套模型。
+
+
+7. 参数与 checkpoint 状态项差异
+======================================================================
+
+7.1 共同的基础常量
+----------------------------------------------------------------------
+
+两套模型都继承 OpenKE BaseModule，因此 state_dict 均包含：
+
+    zero_const
+    pi_const
+
+这两个状态项是不可训练常量，不属于 learned adapter。
+
+
+7.2 learned residual 状态项
+----------------------------------------------------------------------
+
+两套架构都有以下 32 个 learned residual 状态项：
+
+    residual_shared_encoder
+        dense1.weight / dense1.bias
+        norm1.weight / norm1.bias
+        dense2.weight / dense2.bias
+        norm2.weight / norm2.bias
+        共 8 项
+
+    invariant_encoder
+        dense1.weight / dense1.bias
+        norm1.weight / norm1.bias
+        dense2.weight / dense2.bias
+        norm2.weight / norm2.bias
+        共 8 项
+
+    bias_encoder
+        dense1.weight / dense1.bias
+        norm1.weight / norm1.bias
+        dense2.weight / dense2.bias
+        norm2.weight / norm2.bias
+        共 8 项
+
+    invariant_delta_head
+        weight / bias
+
+    bias_delta_head
+        weight / bias
+
+    treatment_head
+        weight / bias
+
+    gate_head
+        weight / bias
+
+    四个 head 合计 8 项
+
+所以 learned residual 状态项固定为：
+
+    8 + 8 + 8 + 8 = 32
+
+
+7.3 原始 62 项 checkpoint 的构成
+----------------------------------------------------------------------
+
+    23 个 official 状态项
+    + 2 个 BaseModule 常量
+    + 32 个 learned residual 状态项
+    + 5 个 canonical 持久化 buffer
+    = 62 项
+
+其中 5 个 canonical buffer 为：
+
+    _residual_scale
+    _residual_multiplier
+    entity_log_degree
+    popularity_mean
+    popularity_std
+
+
+7.4 NELL-995 67 项 checkpoint 的构成
+----------------------------------------------------------------------
+
+    23 个 official 状态项
+    + 2 个 BaseModule 常量
+    + 32 个 learned residual 状态项
+    + 10 个持久化 buffer/配置标记
+    = 67 项
+
+相对原始 62 项新增的 5 项为：
+
+    delta_query_rms_enabled
+    delta_target_rms_value
+    center_residual_enabled
+    preserve_base_ties_enabled
+    floor_residual_at_baseline_min_enabled
+
+这 5 项的作用：
+
+    delta_query_rms_enabled
+        标记 query-RMS calibration 已启用
+
+    delta_target_rms_value
+        保存 delta_target_rms = 0.05
+
+    center_residual_enabled
+        标记 query centering 已启用
+
+    preserve_base_ties_enabled
+        标记 exact baseline ties 的组内同值策略已启用
+
+    floor_residual_at_baseline_min_enabled
+        标记 baseline minimum floor 已启用
+
+因此 checkpoint 从 62 项增加到 67 项，主要不是在网络中多了五层，
+而是多了五个持久化运行配置/数值状态。
+
+composition 脚本所报告的：
+
+    official_tensor_count = 23
+    adapter_tensor_count = 44
+
+其中 44 项的实际组成为：
+
+    2 个 BaseModule 常量
+    + 32 个 learned residual 状态项
+    + 10 个 persistent buffers
+    = 44
+
+“adapter_tensor_count”是组合脚本按 official prefix 分类后的命名，
+不是“44 个全部可训练 adapter 参数”的含义。
+
+
+7.5 checkpoint 规模
+----------------------------------------------------------------------
+
+选中 hybrid checkpoint 的审计记录为：
+
+    state_dict 项数       67
+    stored tensor elements 179,256
+    file size             747,088 bytes
+    seed                  23
+
+file size 会包含 PyTorch 序列化开销，不能等同于浮点参数占用量。
+
+
+8. 推理时应加载的实际配置
+======================================================================
+
+最终测试和匹配比较使用的关键 runtime 参数为：
+
+    architecture                    treatment-aware
+    feature_mode                    triple
+    hash_hops                       1
+    hidden_dim                      128
+    branch_dim                      64
+    branch_activation               relu
+    branch_negative_slope           0.01
+    delta_temperature               1.0
+    delta_normalization             auto，由 checkpoint 解析为 query-rms
+    delta_target_rms                auto，由 checkpoint 解析为 0.05
+    gate_temperature                1.0
+    fusion_mode                     invariant-margin
+    invariant_margin_fraction       0.05
+    invariant_margin_ungated        true
+    invariant_branch_multiplier     1.0
+    bias_branch_multiplier          1.0
+    tie_policy_override             checkpoint
+    residual_multiplier             m
+    filtered_ranking                true
+    device                          CUDA
+
+注意以下参数与训练阶段不同：
+
+    train invariant_margin_fraction  = 0.001
+    test  invariant_margin_fraction  = 0.05
+
+以下参数由 checkpoint 的 buffer 自动解析：
+
+    delta_normalization = query-rms
+    delta_target_rms = 0.05
+    center_residual = true
+    preserve_base_ties = true
+    floor_residual_at_baseline_min = true
+
+以下参数不会作为普通 learned tensor 从网络结构本身推断，
+必须由外部 runner 或 config 明确给出：
+
+    invariant_margin_ungated = true
+    invariant_margin_fraction = 0.05
+    residual_multiplier m
+    fusion_mode = invariant-margin
+
+因此仅拿到 .ckpt 文件，而不知道 runtime flags 时，不能自动断定
+“该文件一定按 ungated invariant-margin、fraction 0.05、m 1.0 运行”。
+
+
+9. 两套架构的完整数据流对照
+======================================================================
+
+9.1 原始 TGIIF
+----------------------------------------------------------------------
+
+    x
+    |
+    +--> official MLP --> base_logit --> S0
+    |
+    +--> residual LayerNorm MLP --> h
+         |
+         +--> invariant_encoder --> z_inv --> delta_inv
+         |
+         +--> [h; popularity] --> bias_encoder --> z_bias
+                                    |
+                                    +--> delta_bias
+                                    +--> treatment_logit
+         |
+         +--> [h; popularity] --> gate_head --> gate
+
+    排名残差：
+        mixed_delta = gate * delta_inv
+                      [canonical invariant-margin]
+
+    残差后处理：
+        tanh
+        -> residual_scale
+        -> m
+        -> invariant-margin cap
+        -> S0 + delta
+
+
+9.2 NELL-995 选中 checkpoint
+----------------------------------------------------------------------
+
+    x
+    |
+    +--> mature official MLP --> base_logit --> S0
+    |
+    +--> residual LayerNorm MLP --> h
+         |
+         +--> invariant_encoder --> z_inv --> delta_inv
+         |
+         +--> [h; popularity] --> bias_encoder --> z_bias
+                                    |
+                                    +--> delta_bias（不进入 mixed_delta）
+                                    +--> treatment_logit（不参与排名）
+         |
+         +--> [h; popularity] --> gate_head --> gate
+                                      （仅保留为辅助/诊断）
+
+    ungated invariant residual：
+        mixed_delta = delta_inv
+
+    tie-safe 后处理：
+        exact base-score grouping
+        -> group mean
+        -> query centering
+        -> query-RMS shrink
+        -> residual_scale * tanh
+        -> m
+        -> fraction cap
+        -> baseline-minimum floor
+        -> S0 + delta
+
+
+10. 为什么 NELL-995 需要不同的残差策略
+======================================================================
+
+10.1 概率评分饱和
+----------------------------------------------------------------------
+
+对 4000-epoch NELL-995 评分器的 50-query 诊断记录为：
+
+    mean unique-score ratio         约 0.000298
+    含 tied candidate scores 的 query 约 99%
+    median target tie group size    17,213
+    maximum target tie group size   74,582
+
+这说明 official sigmoid score 在 NELL-995 上形成非常大的 exact-score
+equivalence classes。原始概率空间上的 score gap 很小，而同一 largest
+tie group 又包含大量候选。
+
+10.2 极小残差也可能重排大 tie group
+----------------------------------------------------------------------
+
+评分饱和验证中：
+
+    m = 0
+        validation MRR = 0.584196
+
+    m = 0.0001
+        validation MRR = 0.368386
+
+    平均 score change 约 9.98e-6
+
+因此，在极大的 exact tie group 上，“数值很小”不等于“排名影响很小”。
+一个极小的浮点残差即可把一个 tied group 拆成多个严格排序。
+
+10.3 这组诊断解释了 NELL-995 的结构选择
+----------------------------------------------------------------------
+
+NELL-995 因而采用：
+
+1. query-RMS shrink，防止 residual 幅度过大；
+2. query centering，使 query 内修正均值为 0；
+3. preserve exact baseline ties，避免无依据地拆分 tied group；
+4. baseline-minimum floor，避免残差翻转 baseline 最低组；
+5. near-tie negative mining，让 residual 学习聚焦 baseline 近似并列区域；
+6. ungated invariant path，避免 learned gate 将该数据上的 invariant
+   ranking signal 压缩到接近 0；
+7. fraction cap，将最终修正限制在 baseline score range 的一个比例内。
+
+
+11. 匹配测试记录与证据边界
+======================================================================
+
+在同一 checkpoint、同一 seed、同一 test split、同一 evaluator、
+同一 fraction 0.05、同一 model configuration 下，只改变 m：
+
+    setting    MRR        MR             Hits@1     Hits@3     Hits@10
+    ----------------------------------------------------------------------
+    m=0       0.565736   3773.388184    0.558993   0.570641   0.570641
+    m=1.0     0.570008   4251.164062    0.558993   0.570641   0.584795
+
+差值：
+
+    MRR      +0.004272
+    MR       +477.775878
+    Hits@1   0.000000
+    Hits@3   0.000000
+    Hits@10  +0.014154
+
+解释：
+
+1. m=1.0 相对 m=0 的 MRR 和 Hits@10 上升；
+2. Hits@1 与 Hits@3 不变；
+3. MR 变大，而 MR 越低越好，因此 MR 方面不是改善；
+4. 结果不能概括为所有指标全面提升；
+5. 这是 single-checkpoint、single-seed 测量，不是多 seed 方差估计；
+6. 该结果只对应本说明书中明确列出的 checkpoint 和 runtime 配置。
+
+
+12. 术语使用规范
+======================================================================
+
+为避免二次工具或人工整理时产生误读，建议采用以下术语：
+
+正确：NELL-995 采用同一 TreatmentAware TGIIF 骨架上的 stagewise
+      tensor-composition 变体。
+
+错误：NELL-995 使用了一套全新的 TGIIF 网络。
+
+正确：official path 的 23 个张量来自成熟的 4000-epoch source。
+
+错误：全部 67 个张量都来自 4000-epoch source。
+
+正确：adapter source 训练了 500 epochs，其非 official 状态项被组合进 hybrid。
+
+错误：500-epoch adapter 是在官方 scorer 已冻结的条件下完成训练的。
+
+正确：hybrid checkpoint 在组合后具有静态 official scorer。
+
+错误：组合后的模型仍以联合训练时的 BatchNorm running statistics 更新。
+
+正确：selected checkpoint 使用 ungated invariant-margin。
+
+错误：selected checkpoint 删除了 gate 或 bias 分支。
+
+正确：treatment classification 权重为 0。
+
+错误：checkpoint 中不存在 treatment_head。
+
+正确：exact baseline ties 在组内接受相同 correction。
+
+错误：所有 exact baseline ties 都被无条件拆开。
+
+正确：baseline-minimum group 不会被残差推到更低。
+
+错误：baseline top-1 group 被残差保护。
+
+正确：训练 fraction = 0.001，测试 fraction = 0.05。
+
+错误：训练和测试都使用 0.05。
+
+正确：m=0 时残差贡献为零，最终分数等于该 checkpoint 的 official S0。
+
+错误：m=0 会删除 checkpoint 中的 adapter 张量。
+
+
+13. 关键源文件与复核入口
+======================================================================
+
+原始 TGIIF 参考：
+
+    F:\Codex\CTS-Net-TGIIF-WN18RR-clean-20260906\
+        openke\module\model\CTSNetTreatmentAwareResidualPredictor.py
+
+    F:\Codex\CTS-Net-TGIIF-WN18RR-clean-20260906\
+        openke\module\model\CTSNetIndependentResidualPredictor.py
+
+    F:\Codex\CTS-Net-TGIIF-WN18RR-clean-20260906\
+        run_v5c_wn18rr_cloud.sh
+
+    F:\Codex\CTS-Net-TGIIF-WN18RR-clean-20260906\
+        CTSNET_V5_TREATMENT_AWARE.md
+
+    F:\Codex\CTS-Net-TGIIF-WN18RR-clean-20260906\
+        TGIIF_1000EP_ALIGNMENT.md
+
+NELL-995 实现：
+
+    F:\Codex\CTS-Net-TGIIF-NELL995-cloud-latest-20260919\
+        openke\module\model\CTSNetTreatmentAwareResidualPredictor.py
+
+    F:\Codex\CTS-Net-TGIIF-NELL995-cloud-latest-20260919\
+        openke\module\model\CTSNetIndependentResidualPredictor.py
+
+    F:\Codex\CTS-Net-TGIIF-NELL995-cloud-latest-20260919\
+        openke\module\strategy\CTSNegativeSampling.py
+
+    F:\Codex\CTS-Net-TGIIF-NELL995-cloud-latest-20260919\
+        examples\train_tgiif_from_scratch_NELL995.py
+
+    F:\Codex\CTS-Net-TGIIF-NELL995-cloud-latest-20260919\
+        run_tgiif_nell995.sh
+
+    F:\Codex\CTS-Net-TGIIF-NELL995-cloud-latest-20260919\
+        run_latest_nell995_cloud.sh
+
+    F:\Codex\CTS-Net-TGIIF-NELL995-cloud-latest-20260919\
+        examples\compose_tgiif_nell995_hybrid.py
+
+    F:\Codex\CTS-Net-TGIIF-NELL995-cloud-latest-20260919\
+        eval_tgiif_nell995.sh
+
+    F:\Codex\CTS-Net-TGIIF-NELL995-cloud-latest-20260919\
+        examples\evaluate_tgiif_checkpoint_NELL995.py
+
+NELL-995 配置和证据：
+
+    F:\Codex\CTS-Net-TGIIF-NELL995-cloud-latest-20260919\
+        NELL995_ADAPTATION_NOTES.md
+
+    F:\Codex\CTS-Net-TGIIF-NELL995-cloud-latest-20260919\
+        CLOUD_DEPLOY_README.md
+
+    F:\Codex\CTS-Net-TGIIF-NELL995-cloud-latest-20260919\
+        reference_evidence\STAGEWISE_ADAPTER_MATURITY_VALIDATION.md
+
+    F:\Codex\CTS-Net-TGIIF-NELL995-cloud-latest-20260919\
+        logs\paper_test_audit\NELL995_TEST_EVALUATION.md
+
+选中 adapter source 的真实 config：
+
+    F:\Codex\CTS-Net-TGIIF-NELL995-cloud-backup-20260913\
+        CTS-Net-TGIIF-NELL995-clean-20260908\
+        logs\tgiif_nell995_safe_gradscale001_cfdt005_treatmentoff_ep500_s23\
+        ctsnet_tgiif_nell995_safe_gradscale001_cfdt005_treatmentoff_ep500_s23_config.json
+
+
+14. 最终定义
+======================================================================
+
+可将 NELL-995 实际采用架构定义如下：
+
+NELL-995 使用一个与原始 TGIIF 同构的 TreatmentAware Residual 网络类。
+最终 hybrid checkpoint 的 official scorer 由 4000-epoch mature checkpoint
+提供，而非 official 状态项由单独训练的 500-epoch Treatment-off adapter source
+提供，并在张量级组合后固定。该变体继续使用 invariant-margin 和
+post-score bounded residual，但绕过 learned gate，使 invariant_delta 直接
+成为可供融合的残差信号；同时采用 query-RMS shrink、query centering、
+exact baseline tie preservation、baseline-minimum floor、near-tie negative
+mining 和 fraction cap。bias、gate 与 treatment head 仍保留在 checkpoint 中，
+但不直接控制最终 invariant ranking。训练 margin fraction 为 0.001，
+匹配测试使用 fraction 0.05，并以同一 checkpoint 的 m=0 与 m=1.0 形成对照。
+
+
+文档结束
+======================================================================

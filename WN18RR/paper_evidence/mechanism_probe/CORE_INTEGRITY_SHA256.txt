@@ -1,0 +1,14 @@
+Core files were not modified by the mechanism probes.
+Verified after all probes and tests on 2026-09-12.
+
+06335D3922238D0BAC7CFD598E6F354BCE1BB5608A20E5B97509628C7EE3F3A0  openke/module/model/CTSNetTreatmentAwareResidualPredictor.py
+75615C96FD7CA6B8FC43A59B4B2AED0BD01649B584D166942349C5CCB72FFD85  openke/module/strategy/CTSNegativeSampling.py
+69AA471BF5ADC3C9291585CE3B927E50932F0570BC14BB71C2BE896674AB8527  examples/train_ctsnet_from_scratch_WN18RR.py
+6FA87CEB8DA57BBF5E69AE5783B6B2E4B3FAE82895CEDF4985C62B0EEBE68A10  examples/evaluate_ctsnet_checkpoint_WN18RR.py
+
+Test command:
+python -m unittest discover -s tests -p 'test_*.py'
+
+Result:
+Ran 52 tests in 1.151s
+OK

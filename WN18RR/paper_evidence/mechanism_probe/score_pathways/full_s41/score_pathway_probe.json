@@ -1,0 +1,150 @@
+{
+  "artifacts": {
+    "group_metrics": "paper_evidence/mechanism_probe/score_pathways/full_s41/group_metrics.csv",
+    "query_ranks": "paper_evidence/mechanism_probe/score_pathways/full_s41/query_ranks.csv"
+  },
+  "checkpoint": "/mnt/f/Codex/CTS-Net-TGIIF-WN18RR-clean-20260906/checkpoint/ctsnet_tgiif_full_ep1000_s41_WN18RR_h1_0.005_Adam_ep1000.ckpt",
+  "invariant_margin_fraction": 0.0001,
+  "metrics": {
+    "baseline_m0": {
+      "count": 6068,
+      "delta_mrr_vs_baseline_m0": 0.0,
+      "hits1": 0.7086354647330257,
+      "hits10": 0.715721819380356,
+      "hits3": 0.7129202373104813,
+      "mr": 5130.18951878708,
+      "mrr": 0.7111842493785578
+    },
+    "gate_one": {
+      "count": 6068,
+      "delta_mrr_vs_baseline_m0": 0.015669281290811243,
+      "hits1": 0.724291364535267,
+      "hits10": 0.7313777191825972,
+      "hits3": 0.7285761371127225,
+      "mr": 5021.208965062624,
+      "mrr": 0.7268535306693691
+    },
+    "gate_query_mean": {
+      "count": 6068,
+      "delta_mrr_vs_baseline_m0": 0.015669281290811243,
+      "hits1": 0.724291364535267,
+      "hits10": 0.7313777191825972,
+      "hits3": 0.7285761371127225,
+      "mr": 5021.208965062624,
+      "mrr": 0.7268535306693691
+    },
+    "gate_shuffled": {
+      "count": 6068,
+      "delta_mrr_vs_baseline_m0": 0.015669281290811243,
+      "hits1": 0.724291364535267,
+      "hits10": 0.7313777191825972,
+      "hits3": 0.7285761371127225,
+      "mr": 5021.208965062624,
+      "mrr": 0.7268535306693691
+    },
+    "invariant_shuffled": {
+      "count": 6068,
+      "delta_mrr_vs_baseline_m0": -0.004528661920557009,
+      "hits1": 0.7050098879367172,
+      "hits10": 0.7107778510217535,
+      "hits3": 0.7071522742254449,
+      "mr": 5278.596572181938,
+      "mrr": 0.7066555874580008
+    },
+    "invariant_sign_flip": {
+      "count": 6068,
+      "delta_mrr_vs_baseline_m0": -0.21648632153837993,
+      "hits1": 0.490112063282795,
+      "hits10": 0.49686882003955174,
+      "hits3": 0.49423203691496376,
+      "mr": 4994.610415293342,
+      "mrr": 0.4946979278401779
+    },
+    "native": {
+      "count": 6068,
+      "delta_mrr_vs_baseline_m0": 0.015669281290811243,
+      "hits1": 0.724291364535267,
+      "hits10": 0.7313777191825972,
+      "hits3": 0.7285761371127225,
+      "mr": 5021.208965062624,
+      "mrr": 0.7268535306693691
+    },
+    "popularity_zero": {
+      "count": 6068,
+      "delta_mrr_vs_baseline_m0": 0.015669281290811243,
+      "hits1": 0.724291364535267,
+      "hits10": 0.7313777191825972,
+      "hits3": 0.7285761371127225,
+      "mr": 5021.208965062624,
+      "mrr": 0.7268535306693691
+    }
+  },
+  "paired_cluster_bootstrap": {
+    "baseline_m0": {
+      "bootstrap_repetitions": 2000,
+      "cluster_bootstrap_ci95": [
+        0.011398284973831187,
+        0.020442406306221128
+      ],
+      "native_minus_variant_mrr": 0.015669281290811243
+    },
+    "gate_one": {
+      "bootstrap_repetitions": 2000,
+      "cluster_bootstrap_ci95": [
+        0.0,
+        0.0
+      ],
+      "native_minus_variant_mrr": 0.0
+    },
+    "gate_query_mean": {
+      "bootstrap_repetitions": 2000,
+      "cluster_bootstrap_ci95": [
+        0.0,
+        0.0
+      ],
+      "native_minus_variant_mrr": 0.0
+    },
+    "gate_shuffled": {
+      "bootstrap_repetitions": 2000,
+      "cluster_bootstrap_ci95": [
+        0.0,
+        0.0
+      ],
+      "native_minus_variant_mrr": 0.0
+    },
+    "invariant_shuffled": {
+      "bootstrap_repetitions": 2000,
+      "cluster_bootstrap_ci95": [
+        0.016371086633475272,
+        0.023953057773129095
+      ],
+      "native_minus_variant_mrr": 0.020197943211368252
+    },
+    "invariant_sign_flip": {
+      "bootstrap_repetitions": 2000,
+      "cluster_bootstrap_ci95": [
+        0.22291834464327948,
+        0.24074611027952003
+      ],
+      "native_minus_variant_mrr": 0.23215560282919118
+    },
+    "popularity_zero": {
+      "bootstrap_repetitions": 2000,
+      "cluster_bootstrap_ci95": [
+        0.0,
+        0.0
+      ],
+      "native_minus_variant_mrr": 0.0
+    }
+  },
+  "popularity_quartile_edges": [
+    2.890371799468994,
+    3.7841897010803223,
+    4.653960347175598
+  ],
+  "residual_multiplier": 0.75,
+  "seed": 41,
+  "split": "valid",
+  "strict_filtered_rank": true,
+  "triple_count": 3034
+}

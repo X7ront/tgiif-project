@@ -1,0 +1,81 @@
+{
+  "bounded_residual_abs": {
+    "max": 9.999999747378752e-05,
+    "mean": 2.2742239223250808e-05
+  },
+  "bounded_residual_exact_sign_fraction": {
+    "negative": 0.28394858272907053,
+    "positive": 0.0,
+    "zero": 0.7160514172709295
+  },
+  "bounded_residual_sign_fraction": {
+    "negative": 0.24950560316413975,
+    "positive": 0.0,
+    "zero": 0.7504943968358603
+  },
+  "candidate_count": 248442124,
+  "candidate_gate": {
+    "max": 1.0,
+    "mean": 0.3677521638854365,
+    "min": 9.93801041460074e-09,
+    "std": 0.41888112644802533
+  },
+  "candidate_native_equals_gate_one_fraction": 0.974065758671424,
+  "candidate_native_exactly_equals_gate_one_fraction": 0.974065758671424,
+  "candidate_saturation_fraction_including_zero_cap": 0.974065758671424,
+  "candidate_saturation_fraction_positive_cap": 0.9086657130691822,
+  "checkpoint": "/mnt/f/Codex/CTS-Net-TGIIF-WN18RR-clean-20260906/checkpoint/ctsnet_tgiif_local_alignment_ep1000_20260906_WN18RR_h1_0.005_Adam_ep1000.ckpt",
+  "invariant_margin_fraction": 0.0001,
+  "positive_cap_candidate_fraction": 0.28394858272907053,
+  "query_all_invariant_same_sign_fraction": 0.9174357284113381,
+  "query_cap": {
+    "max": 9.999999747378752e-05,
+    "mean": 2.4472870304701175e-05,
+    "median": 0.0,
+    "min": 0.0,
+    "q25": 0.0,
+    "q75": 5.725700361513833e-26,
+    "std": 4.2991550118272796e-05
+  },
+  "query_count": 6068,
+  "query_gate_mean": {
+    "max": 1.0,
+    "mean": 0.3677521710755701,
+    "median": 0.2102721780538559,
+    "min": 0.002403103280812502,
+    "q25": 0.06908859312534332,
+    "q75": 0.658693790435791,
+    "std": 0.35425938613057645
+  },
+  "query_gate_std": {
+    "max": 0.35343724489212036,
+    "mean": 0.19525164322710828,
+    "median": 0.19947820901870728,
+    "min": 0.0,
+    "q25": 0.1209929883480072,
+    "q75": 0.294575035572052,
+    "std": 0.108804823437357
+  },
+  "query_pre_cap_abs_mean": {
+    "max": 0.07500001788139343,
+    "mean": 0.03775626091407186,
+    "median": 0.031972166150808334,
+    "min": 0.00022167655697558075,
+    "q25": 0.011444450356066227,
+    "q75": 0.07068794220685959,
+    "std": 0.027247425176853888
+  },
+  "query_saturation_fraction": {
+    "max": 1.0,
+    "mean": 0.9740657636167662,
+    "median": 1.0,
+    "min": 0.36672937870025635,
+    "q25": 1.0,
+    "q75": 1.0,
+    "std": 0.10741526730565377
+  },
+  "residual_multiplier": 0.75,
+  "seed": 23,
+  "split": "valid",
+  "triple_count": 3034
+}
